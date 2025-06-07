@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Список</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="app">
+      <h1>Список дел</h1>
+      <div class="todo-list">
+        <input 
+          v-model="newTodo" 
+          @keyup.enter="addTodo" 
+          placeholder="Добавить новую задачу..."/>
+        <div class="filters">
+          <button @click="filter = 'all'" :class="{ active: filter === 'all' }">Все</button>
+          <button @click="filter = 'active'" :class="{ active: filter === 'active' }">Активные</button>
+          <button @click="filter = 'completed'" :class="{ active: filter === 'completed' }">Завершенные</button>
+        </div>
+        <ul>
+          <li 
+            v-for="todo in filteredTodos" 
+            :key="todo.id" 
+            :class="{ completed: todo.completed }"
+          >
+            <input 
+              type="checkbox" 
+              v-model="todo.completed" 
+            />
+            <span>{{ todo.text }}</span>
+            <button @click="removeTodo(todo.id)">X</button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <script>
+    const { createApp, ref, computed, onMounted } = Vue;
+    createApp({
+      setup() {
+        const newTodo = ref('');
+        const todos = ref([]);
+        const filter = ref('all');
+        onMounted(() => {
+          const savedTodos = localStorage.getItem('todos');
+          if (savedTodos) {
+            todos.value = JSON.parse(savedTodos);}});
+        const addTodo = () => {
+          if (newTodo.value.trim()) {
+            todos.value.push({
+              id: Date.now(),
+              text: newTodo.value.trim(),
+              completed: false,
+            });
+            newTodo.value = '';
+            saveTodos();
+          }
+        };
+        const removeTodo = (id) => {
+          todos.value = todos.value.filter(todo => todo.id !== id);
+          saveTodos();
+        };
+        const filteredTodos = computed(() => {
+          switch (filter.value) {
+            case 'active':
+              return todos.value.filter(todo => !todo.completed);
+            case 'completed':
+              return todos.value.filter(todo => todo.completed);
+            default:
+              return todos.value;}
+        });
+        const saveTodos = () => {
+          localStorage.setItem('todos', JSON.stringify(todos.value));
+        };
+        return {
+          newTodo,
+          todos,
+          filter,
+          addTodo,
+          removeTodo,
+          filteredTodos,};
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
